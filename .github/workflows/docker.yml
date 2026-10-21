@@ -8,12 +8,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Subir a API com docker compose
+      - name: Subir a API
         run: docker compose up -d --build
 
-      - name: Testar se a API responde
-        run: curl --fail --retry 10 --retry-connrefused --retry-delay 2 http://localhost:3000/usuarios
+      - name: Esperar a API iniciar
+        run: sleep 10
 
-      - name: Derrubar os containers
-        if: always()
-        run: docker compose down
+      - name: Testar a API
+        run: curl --fail http://localhost:3000/usuarios
+
+      - name: Mostrar logs se falhar
+        if: failure()
+        run: docker compose logs
