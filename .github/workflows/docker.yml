@@ -1,0 +1,19 @@
+name: Teste do Docker
+
+on: [push, pull_request]
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Subir a API com docker compose
+        run: docker compose up -d --build
+
+      - name: Testar se a API responde
+        run: curl --fail --retry 5 --retry-connrefused --retry-delay 2 http://localhost:3000/usuarios
+
+      - name: Derrubar os containers
+        if: always()
+        run: docker compose down
