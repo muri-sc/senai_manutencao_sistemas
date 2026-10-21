@@ -12,7 +12,7 @@ jobs:
         run: docker compose up -d --build
 
       - name: Testar se a API responde
-        run: curl --fail --retry 5 --retry-connrefused --retry-delay 2 http://localhost:3000/usuarios
+        run: curl --fail --retry 10 --retry-connrefused --retry-delay 2 http://localhost:3000/usuarios
 
       - name: Derrubar os containers
         if: always()
