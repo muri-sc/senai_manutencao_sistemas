@@ -1,32 +1,30 @@
-// MODEL: guarda os dados e as regras de acesso a eles
-const usuarios = [
-  { id: 1, nome: "Ana" },
-  { id: 2, nome: "Bruno" },
-];
-let proximoId = 3;
+// MODEL: acessa o banco de dados (MySQL)
+import { pool } from "../db.js";
 
-export function listar() {
-  return usuarios;
+export async function listar() {
+  const [rows] = await pool.query("SELECT id, nome FROM usuarios");
+  return rows;
 }
 
-export function criar(nome) {
-  const novo = { id: proximoId++, nome };
-  usuarios.push(novo);
-  return novo;
+export async function criar(nome) {
+  const [resultado] = await pool.query(
+    "INSERT INTO usuarios (nome) VALUES (?)",
+    [nome]
+  );
+  return { id: resultado.insertId, nome };
 }
 
-export function atualizar(id, nome) {
-  const usuario = usuarios.find((u) => u.id === id);
-  if (!usuario) return null;
+export async function atualizar(id, nome) {
+  const [resultado] = await pool.query(
+    "UPDATE usuarios SET nome = ? WHERE id = ?",
+    [nome, id]
+  );
+  if (resultado.affectedRows === 0) return null;
 
-  usuario.nome = nome;
-  return usuario;
+  return { id, nome };
 }
 
-export function remover(id) {
-  const indice = usuarios.findIndex((u) => u.id === id);
-  if (indice === -1) return false;
-
-  usuarios.splice(indice, 1);
-  return true;
+export async function remover(id) {
+  const [resultado] = await pool.query("DELETE FROM usuarios WHERE id = ?", [id]);
+  return resultado.affectedRows > 0;
 }
