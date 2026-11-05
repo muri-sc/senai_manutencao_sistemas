@@ -1,6 +1,7 @@
-name: Teste do Docker
+name: Teste de imagem da aplicação
 
-on: [push, pull_request]
+on:
+  workflow_call:
 
 jobs:
   docker:

@@ -1,0 +1,54 @@
+name: Docker Publish
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  docker-test:
+    needs: tests
+    uses: ./.github/workflows/docker-build.yml
+
+  publish:
+    needs: docker-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Calcular próxima versão (patch)
+        id: v
+        run: |
+          LAST=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          LAST=${LAST:-v0.0.0}
+          IFS=. read MA MI PA <<< "${LAST#v}"
+          echo "version=$MA.$MI.$((PA + 1))" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/senai_manutencao_sistemas_ci:${{ steps.v.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/senai_manutencao_sistemas_ci:latest
+
+      - name: Criar tag no Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.v.outputs.version }}"
+          git push origin "v${{ steps.v.outputs.version }}"
