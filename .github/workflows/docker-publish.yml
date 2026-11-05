@@ -9,12 +9,21 @@ permissions:
   contents: write
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  docker-test:
+    needs: tests
+    uses: ./.github/workflows/docker-test.yml
+
   publish:
+    needs: docker-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # precisa buscar as tags
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Calcular próxima versão (patch)
         id: v
@@ -39,5 +48,7 @@ jobs:
 
       - name: Criar tag no Git
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "v${{ steps.v.outputs.version }}"
           git push origin "v${{ steps.v.outputs.version }}"
