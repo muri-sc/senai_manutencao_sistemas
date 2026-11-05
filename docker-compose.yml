@@ -3,3 +3,16 @@ services:
     build: .
     ports:
       - "3000:3000"
+    env_file:
+      - .env
+
+  db:
+    image: mysql:8.0
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+
+volumes:
+  mysql_data:
